@@ -13,6 +13,9 @@
 			const recordId  = "{{ record_id }}";
 			// 1) Cargar lightning.out.js y esperar a que esté listo
 			function loadLightningOut(endpoint, timeoutMs = 15000) {
+				console.log("1.Endpoint: ",endpoint);
+				console.log("2.Endpoint: ",ENDPOINT);
+				console.log("3.recordId: ",recordId);
 				return new Promise((resolve, reject) => {
 					const src = endpoint.replace(/\/+$/,'') + "/lightning/lightning.out.js";
 					const s = document.createElement("script");
@@ -55,6 +58,9 @@
 
 			// 3) Bootstrap con manejo de errores
 			(async function init() {
+				console.log("1.Endpoint: ",endpoint);
+				console.log("2.Endpoint: ",ENDPOINT);
+				console.log("3.recordId: ",recordId);
 				try {
 					await loadLightningOut(ENDPOINT);            // garantiza $Lightning
 					await useLightning("c:SIIGO_OutUiRecordViewerApp_AUR", ENDPOINT);
