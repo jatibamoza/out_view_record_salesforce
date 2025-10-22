@@ -4,7 +4,7 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 # Dominios de tu org (ajústalos por ENV en Render)
-SITE_DOMAIN = os.getenv("SITE_DOMAIN", "https://s11g0--core.sandbox.my.site.com")
+SITE_DOMAIN = os.getenv("SITE_DOMAIN", "https://s11g0--core.sandbox.my.site.com/recordviewerapp")
 CORE_DOMAIN = os.getenv("CORE_DOMAIN", "https://s11g0--core.sandbox.lightning.force.com")
 
 @app.route("/")
