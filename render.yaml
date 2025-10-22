@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: siigo-lo-viewer
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    plan: free
+    envVars:
+      - key: SITE_DOMAIN
+        value: https://s11g0--core.sandbox.my.site.com
+      - key: CORE_DOMAIN
+        value: https://s11g0--core.sandbox.lightning.force.com
