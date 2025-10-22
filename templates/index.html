@@ -21,17 +21,17 @@
   <script>
     // Variables del servidor (Flask) para pasar al componente
     const recordId   = "{{ record_id }}";          // vacío => modo "desconocido"
-    const objectName = "{{ object_api }}";         // 'Lead' | 'Account' | 'desconocido'
-    const baseDomain = "{{ base_domain }}";        // dominio core (para forzar login si no hay sesión)
-    const siteDomain = "{{ site_domain }}";        // dominio del Experience
+    //const objectName = "{{ object_api }}";         // 'Lead' | 'Account' | 'desconocido'
+    //const baseDomain = "{{ base_domain }}";        // dominio core (para forzar login si no hay sesión)
+    //const siteDomain = "{{ site_domain }}";        // dominio del Experience
 
     // Usa la app Lightning Out de tu org (debes crearla como ltng:outApp con deps a tus LWC)
-    $Lightning.use("c:SiigoOutApp",
+    $Lightning.use("c:SIIGO_OutUiRecordViewerApp_AUR",
       function () {
         // Componente Aura host que envuelve al LWC y acepta los attrs
         $Lightning.createComponent(
-          "c:SiigoUiRecordViewerHost",
-          { recordId: recordId, objectApiName: objectName, baseDomain: baseDomain },
+          "c:SIIGO_UiRecordViewerHost_AUR",
+          { recordId: recordId },
           "siigo_container",
           function (cmp) { console.log("Siigo Viewer cargado"); }
         );
