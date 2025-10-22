@@ -4,35 +4,67 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>Lightning Out – Record Viewer</title>
 		<style>
-		body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0}
-		.wrap{max-width:1100px;margin:24px auto;padding:0 12px}
-		#status{padding:8px 0}
+			body{
+				font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0}
+				.wrap{max-width:1100px;margin:24px auto;padding:0 12px}
+				/* --- Spinner --- */
+				.spinner {
+					display:inline-block; width:18px; height:18px; margin-right:8px;
+					border-radius:50%; border:3px solid rgba(0,0,0,.12);
+					border-top-color: rgba(0,0,0,.65); animation: spin .8s linear infinite;
+					vertical-align:-3px;
+				}
+				@keyframes spin { to { transform: rotate(360deg); } }
+				.status { padding:10px 0; display:flex; align-items:center; gap:8px }
+				.status.ok    { color:#1a7f37 }   /* verde */
+				.status.warn  { color:#b00020 }   /* rojo error */
+				.status.mute  { color:#6e6e6e }   /* gris */
+				.pill { padding:2px 8px; border:1px solid #ddd; border-radius:999px; font-size:12px; }
+				.btn-retry {
+				display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+				padding:6px 10px; border-radius:6px; border:1px solid #d0d0d0; background:#fff;
+			}
+			.btn-retry:hover{ background:#f7f7f7 }
 		</style>
 	</head>
 	<body>
 		<div class="wrap">
-		<h2>Record Viewer (Lightning Out)</h2>
-		<div id="status">Cargando…</div>
-		<div id="mi_container"></div>
-	</div>
+			<h2>Record Viewer (Lightning Out)</h2>
+			<!-- Estado con spinner -->
+			<div id="status" class="status mute">
+				<span class="spinner" aria-hidden="true"></span>
+				<span id="statusText">Conectando…</span>
+				<span id="statusStep" class="pill">inicializando</span>
+				<button id="retryBtn" class="btn-retry" style="display:none" type="button">Reintentar</button>
+			</div>
+			<div id="mi_container"></div>
+		</div>
 		<script>
 			// Valores inyectados por Flask
-			const ENDPOINT   = "{{ site_domain }}";         // p.ej. https://...my.site.com/recordviewerapp
-			const BASE_CORE  = "{{ base_domain }}";         // p.ej. https://...lightning.force.com
-			const RECORD_ID  = "{{ record_id }}";           // ← viene del querystring ?id=
-			const OBJECT_API = "{{ object_api }}";          // ← ?object=Lead|Account|desconocido
+			const ENDPOINT   = "{{ site_domain }}";         	 // p.ej. https://...my.site.com/recordviewerapp
+			const BASE_CORE  = "{{ base_domain }}";         	 // p.ej. https://...lightning.force.com
+			const RECORD_ID  = "{{ record_id }}";           	 // ← viene del querystring ?id=
+			const OBJECT_API = "{{ object_api }}";          	 // ← ?object=Lead|Account|desconocido
 
 			const APP_NAME = "c:SIIGO_OutUiRecordViewerApp_AUR"; // tu Aura App (GLOBAL)
-			const HOST_DEF = "c:SIIGO_UiRecordViewerHost_AUR";        // tu Aura host (GLOBAL)
+			const HOST_DEF = "c:SIIGO_UiRecordViewerHost_AUR";   // tu Aura host (GLOBAL)
 
-			function setStatus(msg, isErr=false){
-				const s = document.getElementById('status');
-				s.textContent = (isErr ? "⚠️ " : "✅ ") + msg;
-				s.style.color = isErr ? "#b00020" : "inherit";
-			}
+			const $status = document.getElementById('status');
+			const $text   = document.getElementById('statusText');
+			const $step   = document.getElementById('statusStep');
+			const $retry  = document.getElementById('retryBtn');
 
+			function setStep(label) { $step.textContent = label; }
+			function setOK(msg){ $status.className = 'status ok';  $text.textContent = msg; hideSpinner(); }
+			function setWarn(msg){ $status.className = 'status warn'; $text.textContent = msg; hideSpinner(); $retry.style.display='inline-flex'; }
+			function setMute(msg){ $status.className = 'status mute'; $text.textContent = msg; showSpinner(); $retry.style.display='none'; }
+			function showSpinner(){ if(!document.querySelector('#status .spinner')) { const s=document.createElement('span'); s.className='spinner'; s.setAttribute('aria-hidden','true'); $status.insertBefore(s,$status.firstChild); } }
+			function hideSpinner(){ const s=document.querySelector('#status .spinner'); if(s) s.remove(); }
+
+			
 			function loadLightningOut(timeoutMs=15000){
 				return new Promise((resolve,reject)=>{
+					setStep('cargando framework');
 					const src = ENDPOINT.replace(/\/+$/,'') + "/lightning/lightning.out.js";
 					const s = document.createElement("script");
 					let done=false;
@@ -43,9 +75,10 @@
 					s.src = src;
 				});
 			}
-
+			
 			function useLightning(timeoutMs=15000){
 				return new Promise((resolve,reject)=>{
+					setStep('creando contexto');
 					let done=false;
 					const t=setTimeout(()=>{ if(!done) reject(new Error("Lightning.use timeout")); }, timeoutMs);
 					try{
@@ -54,33 +87,45 @@
 				});
 			}
 
+			
 			function createLoComponent(def, attrs, containerId){
 				return new Promise((resolve,reject)=>{
-				try{
-					$Lightning.createComponent(def, attrs, containerId, cmp=>resolve(cmp));
-				}catch(e){ reject(e); }
+					setStep('renderizando componente');
+					try{ 
+						$Lightning.createComponent(def, attrs, containerId, cmp=>resolve(cmp)); 
+					}
+					catch(e){ reject(e); }
 				});
 			}
-
-			(async function init(){
+			
+			async function bootstrap(){
+				$retry.style.display='none';
+				setMute('Conectando…');
 				try{
 					await loadLightningOut();
 					await useLightning();
 					await createLoComponent(
-						HOST_DEF,
-						{ recordId: RECORD_ID },
-						"mi_container"
+					HOST_DEF,
+					{ recordId: RECORD_ID },
+					"siigo_container"
 					);
-					setStatus("Lightning Out inicializado.");
+					setOK('Listo.');
+					setStep('operativo');
 				}catch(err){
-					console.error("Lightning Out ERROR:", err);
-					setStatus("No fue posible inicializar Lightning Out. Revisa CSP en Render y Trusted Sites/CORS en Salesforce.", true);
+					console.error('Lightning Out ERROR:', err);
+					setWarn('No fue posible inicializar Lightning Out. Revisa CSP (host) y Trusted Sites/CORS (Salesforce).');
+					setStep('falló');
 				}
-			})();
+			}
 
-			// logs útiles
+			$retry.addEventListener('click', bootstrap);
+
+			// listeners útiles
 			window.addEventListener('error', e => console.error('[window.error]', e.error || e.message));
 			window.addEventListener('unhandledrejection', e => console.error('[unhandledrejection]', e.reason));
+
+			// Inicia
+			bootstrap();
 		</script>
 	</body>
 </html>
