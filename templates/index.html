@@ -1,43 +1,80 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Siigo Lightning Out</title>
-  <!-- Carga el runtime desde tu Experience -->
-  <script src="{{ site_domain }}/lightning/lightning.out.js"></script>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    .container { max-width: 1100px; margin: 24px auto; padding: 0 12px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Siigo Record Viewer (Lightning Out)</h2>
-    <div id="siigo_container"></div>
-  </div>
+	<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Siigo Lightning Out</title>
+		<!-- Carga el runtime desde tu Experience -->
+		<script src="{{ site_domain }}/lightning/lightning.out.js"></script>
+		<style>
+			body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+			.container { max-width: 1100px; margin: 24px auto; padding: 0 12px; }
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h2>Siigo Record Viewer (Lightning Out)</h2>
+			<div id="siigo_container"></div>
+		</div>
+		<script>
+			// 1) captura de errores globales
+			window.addEventListener('error',    e => console.error('[window.error]', e.error || e.message));
+			window.addEventListener('unhandledrejection', e => console.error('[unhandledrejection]', e.reason));
 
-  <script>
-    // Variables del servidor (Flask) para pasar al componente
-    const recordId   = "{{ record_id }}";          // vacío => modo "desconocido"
-    //const objectName = "{{ object_api }}";         // 'Lead' | 'Account' | 'desconocido'
-    //const baseDomain = "{{ base_domain }}";        // dominio core (para forzar login si no hay sesión)
-    const siteDomain = "{{ site_domain }}";        // dominio del Experience
+			// 2) helper: usar Lightning Out con timeout y catch
+			function useLightning(appName, endpoint, timeoutMs = 15000) {
+				return new Promise((resolve, reject) => {
+					let done = false;
+					const t = setTimeout(() => {
+						if (!done) reject(new Error('Lightning Out timed out (' + timeoutMs + 'ms)'));
+					}, timeoutMs);
 
-    // Usa la app Lightning Out de tu org (debes crearla como ltng:outApp con deps a tus LWC)
-    $Lightning.use("c:SIIGO_OutUiRecordViewerApp_AUR",
-      function () {
-        // Componente Aura host que envuelve al LWC y acepta los attrs
-        $Lightning.createComponent(
-          "c:SIIGO_UiRecordViewerHost_AUR",
-          { recordId: recordId },
-          "siigo_container",
-          function (cmp) { console.log("Siigo Viewer cargado"); }
-        );
-      },
-      siteDomain // <<— endpoint del Experience (no el core)
-    );
-  </script>
-</body>
+					try {
+						$Lightning.use(appName, () => {
+							done = true; clearTimeout(t);
+							resolve();                      // listo para crear componentes
+						}, endpoint);
+					} catch (err) {
+						done = true; clearTimeout(t);
+						reject(err);
+					}
+				});
+			}
+
+			// 3) helper: crear componente con try/catch
+			function createLoComponent(def, attrs, containerId) {
+				return new Promise((resolve, reject) => {
+					try {
+						$Lightning.createComponent(def, attrs, containerId, cmp => resolve(cmp));
+					} catch (err) {
+						reject(err);
+					}
+				});
+			}
+
+			// 4) uso con manejo de error
+			(async function bootstrap() {
+				const endpoint = "https://s11g0--core.sandbox.my.site.com/recordviewerapp";
+				try {
+					await useLightning("c:SiigoOutApp", endpoint);
+					await createLoComponent(
+						"c:SiigoUiRecordViewerHost",
+						{
+						recordId: "001D000001HD0MWIA1",
+						objectApiName: "Account",
+						baseDomain: "https://s11g0--core.sandbox.lightning.force.com"
+						},
+						"siigo_container"
+					);
+					console.log('Lightning Out OK');
+				} catch (err) {
+					console.error('Lightning Out ERROR:', err);
+					// mensaje visible para el usuario
+					const el = document.getElementById('siigo_container');
+					if (el) el.innerHTML = '<div style="color:#c23934">No fue posible cargar la app. Revisa CORS/CSP/Guest permissions.</div>';
+				}
+			})();
+		</script>
+	</body>
 </html>
