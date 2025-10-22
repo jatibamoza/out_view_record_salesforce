@@ -9,16 +9,14 @@ CORE_DOMAIN = os.getenv("CORE_DOMAIN", "https://s11g0--core.sandbox.lightning.fo
 
 @app.route("/")
 def index():
-    record_id = request.args.get("id", "")                   # ej: 001D000001HD0MWIA1
-    #object_api = request.args.get("object", "Account")       # 'Lead' | 'Account' | 'desconocido'
-    #base_domain = CORE_DOMAIN                                # para la botonera que fuerza login en core
-    #site_domain = SITE_DOMAIN                                # endpoint del Experience para Lightning Out
+    record_id = request.args.get("id", "")  # ej: 001D000001HD0MWIA1
+    base_domain = CORE_DOMAIN               # para la botonera que fuerza login en core
+    site_domain = SITE_DOMAIN               # endpoint del Experience para Lightning Out
     return render_template(
         "index.html",
-        record_id=record_id
-        #object_api=object_api,
-        #base_domain=base_domain,
-        #site_domain=site_domain
+        record_id=record_id,
+        base_domain=base_domain,
+        site_domain=site_domain
     )
 
 if __name__ == "__main__":
