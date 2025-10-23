@@ -30,7 +30,7 @@ def add_csp_headers(resp):
 		f"style-src  'self' 'unsafe-inline' {SITE_ORIGIN}",
 		f"img-src    'self' data: {SITE_ORIGIN} {CONTENT_ORIGIN}",
 		f"frame-src  {SITE_ORIGIN} {CORE_ORIGIN}",
-		f"connect-src 'self' {SITE_ORIGIN} {CORE_ORIGIN} {CONTENT_ORIGIN}",
+		f"connect-src 'self' {SITE_ORIGIN} {CORE_ORIGIN} {CONTENT_ORIGIN} {STATIC_LIGHTNING}",
 		f"font-src  'self' data: {SITE_ORIGIN} {CONTENT_ORIGIN}",
 		# f"worker-src 'self' {SITE_ORIGIN} {CORE_ORIGIN}",   # opcional si lo ves en logs
 	])
