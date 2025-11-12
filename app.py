@@ -41,12 +41,16 @@ def add_csp_headers(resp):
 
 @app.route("/")
 def index():
-	record_id  = request.args.get("id", "")
-	object_api = request.args.get("object", "Account")
+	auth = request.args.get("auth", "")
+	LlamadaId = request.args.get("LlamadaId", "")
+	Option = request.args.get("Option", "")
+	productPpal = request.args.get("productPpal", "")
+	Value  = request.args.get("Value", "")
+
 	return render_template(
 		"index.html",
 		site_domain=SITE_ENDPOINT,   # con /recordviewerapp
 		base_domain=CORE_DOMAIN,
-		record_id=record_id,
-		object_api=object_api
+		record_id=Value,
+		call_id=LlamadaId
 	)

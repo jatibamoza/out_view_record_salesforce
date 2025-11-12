@@ -44,7 +44,7 @@
 			const ENDPOINT   = "{{ site_domain }}";         	 // p.ej. https://...my.site.com/recordviewerapp
 			const BASE_CORE  = "{{ base_domain }}";         	 // p.ej. https://...lightning.force.com
 			const RECORD_ID  = "{{ record_id }}";           	 // ← viene del querystring ?id=
-			const OBJECT_API = "{{ object_api }}";          	 // ← ?object=Lead|Account|desconocido
+			const CALL_ID = "{{ call_id }}";          	 // ← ?object=Lead|Account|desconocido
 
 			const APP_NAME = "c:SIIGO_OutUiRecordViewerApp_AUR"; // tu Aura App (GLOBAL)
 			const HOST_DEF = "c:SIIGO_UiRecordViewerHost_AUR";   // tu Aura host (GLOBAL)
@@ -106,7 +106,7 @@
 					await useLightning();
 					await createLoComponent(
 					HOST_DEF,
-					{ recordId: RECORD_ID },
+					{ recordId: RECORD_ID, callId: CALL_ID },
 					"mi_container"
 					);
 					setOK('Listo.');
