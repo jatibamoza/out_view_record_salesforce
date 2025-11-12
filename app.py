@@ -51,6 +51,6 @@ def index():
 		"index.html",
 		site_domain=SITE_ENDPOINT,   # con /recordviewerapp
 		base_domain=CORE_DOMAIN,
-		record_id=Value,
-		call_id=LlamadaId
+		Value=Value,
+		LlamadaId=LlamadaId
 	)
